@@ -12,22 +12,18 @@ namespace Server
     {
         public void Start()
         {
-            Socket client = ListenForConnection();
+            Socket clientConnection = ListenForConnection();
 
             byte[] message = Encoding.ASCII.GetBytes("Connected");
-            client.Send(message);
-            client.Shutdown(SocketShutdown.Both);
-            client.Close();
+            clientConnection.Send(message);
+            clientConnection.Shutdown(SocketShutdown.Both);
+            clientConnection.Close();
         }
 
         Socket ListenForConnection()
         {
-            // Get Host IP Address that is used to establish a connection  
-            // In this case, we get one IP address of localhost that is IP : 127.0.0.1  
-            // If a host has multiple addresses, you will get a list of addresses  
-            IPHostEntry host = Dns.GetHostEntry("localhost");
-            IPAddress ipAddress = host.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 5678);
 
             // Create a Socket that will use Tcp protocol      
             Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -38,9 +34,9 @@ namespace Server
             listener.Listen(10);
 
             Console.WriteLine("Waiting for a connection...");
-            Socket handler = listener.Accept();
+            Socket clientConnection = listener.Accept();
                 
-            return handler;
+            return clientConnection;
         }
     }
 

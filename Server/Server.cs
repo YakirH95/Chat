@@ -35,10 +35,34 @@ namespace Server
 
             Console.WriteLine("Waiting for a connection...");
             Socket clientConnection = listener.Accept();
-                
+            Console.WriteLine("Client connected");
+            // Incoming data from the client.    
+            string data = null;
+            byte[] bytes = null;
+
+            while (true)
+            {
+                bytes = new byte[1024];
+                int bytesRec = clientConnection.Receive(bytes);
+                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                Console.WriteLine("Text received : {0}", data);
+
+                if (data.IndexOf("<EOF>") > -1)
+                {
+                    break;
+                }
+            }
+
+
+            byte[] msg = Encoding.ASCII.GetBytes(data);
+            clientConnection.Send(msg);
+
             return clientConnection;
         }
+
+        void Communication()
+        {
+
+        }
     }
-
-
 }

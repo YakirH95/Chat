@@ -76,8 +76,6 @@ namespace Server
 
             while (true)
             {
-                byte[] bytes = new byte[1024];
-
                 // Encode the data string into a byte array. 
                 byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
 

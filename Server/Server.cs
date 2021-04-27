@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
@@ -14,8 +15,12 @@ namespace Server
         {
             Socket clientConnection = ListenForConnection();
 
-            byte[] message = Encoding.ASCII.GetBytes("Connected");
-            clientConnection.Send(message);
+
+            Thread sendThread = new Thread(() => CommunicationSender(clientConnection));
+            sendThread.Start();
+            CommunicationReciever(clientConnection);
+
+
             clientConnection.Shutdown(SocketShutdown.Both);
             clientConnection.Close();
         }
@@ -36,33 +41,49 @@ namespace Server
             Console.WriteLine("Waiting for a connection...");
             Socket clientConnection = listener.Accept();
             Console.WriteLine("Client connected");
-            // Incoming data from the client.    
-            string data = null;
-            byte[] bytes = null;
-
-            while (true)
-            {
-                bytes = new byte[1024];
-                int bytesRec = clientConnection.Receive(bytes);
-                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                Console.WriteLine("Text received : {0}", data);
-
-                if (data.IndexOf("<EOF>") > -1)
-                {
-                    break;
-                }
-            }
-
-
-            byte[] msg = Encoding.ASCII.GetBytes(data);
-            clientConnection.Send(msg);
 
             return clientConnection;
         }
 
-        void Communication()
+        void CommunicationReciever(Socket clientConnection)
         {
+            // Incoming data from the client.    
+            byte[] bytes = null;
 
+            while (true)
+            {
+                string data = null;
+                bytes = new byte[1024];
+
+                int bytesRec = clientConnection.Receive(bytes);
+                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                Console.WriteLine("Text received from client : {0}", data);
+
+                if (data != null)
+                {
+                    Console.WriteLine("Enter your message");
+                }
+                if (data.IndexOf("exit") > -1)
+                {
+                    break;
+                }
+            }
+        }
+
+        void CommunicationSender(Socket clientConnection)
+        {
+            Console.WriteLine("Enter your message");
+
+            while (true)
+            {
+                byte[] bytes = new byte[1024];
+
+                // Encode the data string into a byte array. 
+                byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
+
+                // Send the data through the socket.    
+                int bytesSent = clientConnection.Send(msg);
+            }
         }
     }
 }

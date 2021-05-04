@@ -13,16 +13,15 @@ namespace Server
     {
         public void Start()
         {
-            Socket clientConnection = ListenForConnection();
+            Socket listener = ListenForConnection();
+            Socket clientA = listener.Accept();
+            Socket clientB = listener.Accept();
 
+            Thread BtoA = new Thread(() => bytesSender(clientA, clientB));
+            BtoA.Start();
 
-            Thread sendThread = new Thread(() => CommunicationSender(clientConnection));
-            sendThread.Start();
-            CommunicationReciever(clientConnection);
-
-
-            clientConnection.Shutdown(SocketShutdown.Both);
-            clientConnection.Close();
+            bytesSender(clientB, clientA);
+        
         }
 
         Socket ListenForConnection()
@@ -36,13 +35,9 @@ namespace Server
             listener.Bind(localEndPoint);
             // Specify how many requests a Socket can listen before it gives Server busy response.  
             // We will listen 10 requests at a time  
-            listener.Listen(10);
+            listener.Listen(1);
 
-            Console.WriteLine("Waiting for a connection...");
-            Socket clientConnection = listener.Accept();
-            Console.WriteLine("Client connected");
-
-            return clientConnection;
+            return listener;
         }
 
         void CommunicationReciever(Socket clientConnection)
@@ -52,11 +47,10 @@ namespace Server
 
             while (true)
             {
-                string data = null;
                 bytes = new byte[1024];
 
                 int bytesRec = clientConnection.Receive(bytes);
-                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                string data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
                 Console.WriteLine("Text received from client : {0}", data);
 
                 if (data != null)
@@ -81,6 +75,20 @@ namespace Server
 
                 // Send the data through the socket.    
                 int bytesSent = clientConnection.Send(msg);
+            }
+        }
+
+        void bytesSender(Socket sender, Socket reciever)
+        {
+            byte[] bytes = null;
+
+            while (true)
+            {
+                bytes = new byte[1024];
+                int bytesRecieved = sender.Receive(bytes);
+
+                Array.Resize(ref bytes, bytesRecieved);
+                reciever.Send(bytes);
             }
         }
     }

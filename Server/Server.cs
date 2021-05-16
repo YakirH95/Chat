@@ -11,17 +11,25 @@ namespace Server
 {
     class Server
     {
+        List<Socket> clients;
+
+        public Server()
+        {
+            clients = new List<Socket>();
+        }
+
         public void Start()
         {
             Socket listener = ListenForConnection();
-            Socket clientA = listener.Accept();
-            Socket clientB = listener.Accept();
 
-            Thread BtoA = new Thread(() => bytesSender(clientA, clientB));
-            BtoA.Start();
+            while (true)
+            {
+                Socket newClient = listener.Accept();
+                clients.Add(newClient);
 
-            bytesSender(clientB, clientA);
-        
+                Thread BtoA = new Thread(() => bytesSender(newClient));
+                BtoA.Start();
+            }
         }
 
         Socket ListenForConnection()
@@ -40,45 +48,7 @@ namespace Server
             return listener;
         }
 
-        void CommunicationReciever(Socket clientConnection)
-        {
-            // Incoming data from the client.    
-            byte[] bytes = null;
-
-            while (true)
-            {
-                bytes = new byte[1024];
-
-                int bytesRec = clientConnection.Receive(bytes);
-                string data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                Console.WriteLine("Text received from client : {0}", data);
-
-                if (data != null)
-                {
-                    Console.WriteLine("Enter your message");
-                }
-                if (data.IndexOf("exit") > -1)
-                {
-                    break;
-                }
-            }
-        }
-
-        void CommunicationSender(Socket clientConnection)
-        {
-            Console.WriteLine("Enter your message");
-
-            while (true)
-            {
-                // Encode the data string into a byte array. 
-                byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
-
-                // Send the data through the socket.    
-                int bytesSent = clientConnection.Send(msg);
-            }
-        }
-
-        void bytesSender(Socket sender, Socket reciever)
+        void bytesSender(Socket sender)
         {
             byte[] bytes = null;
 
@@ -88,7 +58,14 @@ namespace Server
                 int bytesRecieved = sender.Receive(bytes);
 
                 Array.Resize(ref bytes, bytesRecieved);
-                reciever.Send(bytes);
+
+                foreach (Socket client in clients)
+                {
+                    if (sender != client)
+                    {
+                        client.Send(bytes);
+                    }
+                }
             }
         }
     }

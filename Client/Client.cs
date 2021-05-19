@@ -64,10 +64,6 @@ namespace Client
                 int bytesRec = serverConnection.Receive(bytes);
                 data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
                 Console.WriteLine("Text received from server : {0}", data);
-                if (data != null)
-                {
-                    Console.WriteLine("Enter your message");
-                }
 
                 if (data.IndexOf("exit") > -1)
                 {

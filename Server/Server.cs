@@ -11,18 +11,25 @@ namespace Server
 {
     class Server
     {
+        List<Socket> clients;
+
+        public Server()
+        {
+            clients = new List<Socket>();
+        }
+
         public void Start()
         {
-            Socket clientConnection = ListenForConnection();
+            Socket listener = ListenForConnection();
 
+            while (true)
+            {
+                Socket newClient = listener.Accept();
+                clients.Add(newClient);
 
-            Thread sendThread = new Thread(() => CommunicationSender(clientConnection));
-            sendThread.Start();
-            CommunicationReciever(clientConnection);
-
-
-            clientConnection.Shutdown(SocketShutdown.Both);
-            clientConnection.Close();
+                Thread BtoA = new Thread(() => bytesSender(newClient));
+                BtoA.Start();
+            }
         }
 
         Socket ListenForConnection()
@@ -36,51 +43,29 @@ namespace Server
             listener.Bind(localEndPoint);
             // Specify how many requests a Socket can listen before it gives Server busy response.  
             // We will listen 10 requests at a time  
-            listener.Listen(10);
+            listener.Listen(1);
 
-            Console.WriteLine("Waiting for a connection...");
-            Socket clientConnection = listener.Accept();
-            Console.WriteLine("Client connected");
-
-            return clientConnection;
+            return listener;
         }
 
-        void CommunicationReciever(Socket clientConnection)
+        void bytesSender(Socket sender)
         {
-            // Incoming data from the client.    
             byte[] bytes = null;
 
             while (true)
             {
-                string data = null;
                 bytes = new byte[1024];
+                int bytesRecieved = sender.Receive(bytes);
 
-                int bytesRec = clientConnection.Receive(bytes);
-                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                Console.WriteLine("Text received from client : {0}", data);
+                Array.Resize(ref bytes, bytesRecieved);
 
-                if (data != null)
+                foreach (Socket client in clients)
                 {
-                    Console.WriteLine("Enter your message");
+                    if (sender != client)
+                    {
+                        client.Send(bytes);
+                    }
                 }
-                if (data.IndexOf("exit") > -1)
-                {
-                    break;
-                }
-            }
-        }
-
-        void CommunicationSender(Socket clientConnection)
-        {
-            Console.WriteLine("Enter your message");
-
-            while (true)
-            {
-                // Encode the data string into a byte array. 
-                byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
-
-                // Send the data through the socket.    
-                int bytesSent = clientConnection.Send(msg);
             }
         }
     }

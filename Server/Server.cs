@@ -25,6 +25,7 @@ namespace Server
             while (true)
             {
                 Socket newClient = listener.Accept();
+                Console.WriteLine("connected");
                 clients.Add(newClient);
 
                 Thread BtoA = new Thread(() => bytesSender(newClient));
@@ -44,7 +45,6 @@ namespace Server
             // Specify how many requests a Socket can listen before it gives Server busy response.  
             // We will listen 10 requests at a time  
             listener.Listen(1);
-
             return listener;
         }
 

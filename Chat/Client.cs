@@ -12,18 +12,20 @@ namespace Chat
 {
     class Client
     {
-        public void Start()
+        Socket serverConnection;
+
+        public void Connect(Delegate addTextMethod)
         {
-            Socket serverConnection = ConnectToServer();
-            /*Console.WriteLine("Socket connected to {0}", serverConnection.RemoteEndPoint.ToString());
+            serverConnection = ConnectToServer();
 
-            Thread recieveThread = new Thread(() => CommunicationReciever(serverConnection));
+            Thread recieveThread = new Thread(() => CommunicationReciever(addTextMethod));
             recieveThread.Start();
+        }
 
-            CommunicationSender(serverConnection);
-
+        public void Close()
+        {
             serverConnection.Shutdown(SocketShutdown.Both);
-            serverConnection.Close();*/
+            serverConnection.Close();
         }
 
         Socket ConnectToServer()
@@ -37,37 +39,27 @@ namespace Chat
             return serverConnection;
         }
 
-        void CommunicationSender(Socket serverConnection)
+        public void SendMessage(String message)
         {
-            Console.WriteLine("Enter your message");
+            // Encode the data string into a byte array. 
+            byte[] msg = Encoding.ASCII.GetBytes(message);
 
-            while (true)
-            {
-                // Encode the data string into a byte array. 
-                byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
-
-                // Send the data through the socket.    
-                int bytesSent = serverConnection.Send(msg);
-            }
+            // Send the data through the socket.    
+            int bytesSent = serverConnection.Send(msg);
         }
 
-        void CommunicationReciever(Socket serverConnection)
+        void CommunicationReciever(Delegate addTextMethod)
         {
             byte[] bytes = null;
             while (true)
             {
                 // Incoming data from the server.    
-                string data = null;
                 bytes = new byte[1024];
 
                 int bytesRec = serverConnection.Receive(bytes);
-                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                Console.WriteLine("Text received from server : {0}", data);
+                String data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
-                if (data.IndexOf("exit") > -1)
-                {
-                    break;
-                }
+                addTextMethod.DynamicInvoke(data + Environment.NewLine);
             }
         }
     }

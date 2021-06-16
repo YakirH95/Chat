@@ -44,8 +44,10 @@ namespace Client
 
             while (true)
             {
+                String message_to_send = Console.ReadLine();
+
                 // Encode the data string into a byte array. 
-                byte[] msg = Encoding.ASCII.GetBytes(Console.ReadLine());
+                byte[] msg = Encoding.ASCII.GetBytes(message_to_send);
 
                 // Send the data through the socket.    
                 int bytesSent = serverConnection.Send(msg);

@@ -25,7 +25,7 @@ namespace Server
             while (true)
             {
                 Socket newClient = listener.Accept();
-                Console.WriteLine("connected");
+                Console.WriteLine("client connected");
                 clients.Add(newClient);
 
                 Thread BtoA = new Thread(() => bytesSender(newClient));
